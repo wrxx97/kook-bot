@@ -19,11 +19,11 @@ export enum KookMsgType {
 
 export enum KookCommandType {
   // 夕阳排名
-  RANK = 'rank',
+  RANK = 'r',
   // 每周活动
-  WEEK_ACTIVITY = '每周活动',
+  WEEK_ACTIVITY = 'ac',
   // chat
-  CHAT = 'chat',
+  CHAT = 'c',
   // draw
   DRAW = 'draw',
 }

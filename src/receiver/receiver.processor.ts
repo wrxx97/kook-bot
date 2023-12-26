@@ -14,9 +14,9 @@ export class ReceiverProcessor {
   async handleTranscode(job: Job) {
     this.logger.debug('Start transcoding...');
     this.logger.debug(job.data);
-    await this.senderService.send_message(job.data);
+    const request = await this.senderService.generate_message(job.data);
+    await this.senderService.send_message(request);
     this.logger.debug('Transcoding completed');
-
     return {};
   }
 }

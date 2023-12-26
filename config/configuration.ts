@@ -12,12 +12,19 @@ export default () => ({
     api: {
       host: 'https://www.kookapp.cn/api/v3',
       routes: {
-        send_group_message: '/group/message',
+        send_group_message: '/message/create',
         send_private_message: '/private/message',
         update_message: '/message',
         reaction_message: '/reaction',
       },
     },
+  },
+  baidu: {
+    token_api: 'https://aip.baidubce.com/oauth/2.0/token',
+    ak: 'f0Gu1iChx4G2bFCpACt9gQOj',
+    sk: 'oCLjswylSvCmyAYIigSzQxEwHByqbMTv',
+    chat_api:
+      'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/eb-instant',
   },
   redis: {
     host: 'localhost',
