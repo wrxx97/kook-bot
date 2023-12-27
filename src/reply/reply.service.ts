@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from 'src/redis/redis.service';
 import * as qs from 'qs';
-import { Cron, Interval } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class ReplyService {
@@ -59,7 +59,7 @@ export class ReplyService {
   async dn_activity(content) {
     // 获取活动列表
     const cache = await this.redisService.get('dn_activity');
-    if (content !== 'up' && cache) return cache;
+    if (content.trim() !== 'up' && cache) return cache;
 
     console.info('update dn activity');
     const response = await fetch(
