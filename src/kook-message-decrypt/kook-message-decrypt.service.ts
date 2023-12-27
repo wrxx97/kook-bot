@@ -83,7 +83,6 @@ export class KookMessageDecryptService {
       channel_type === KookChannelType.PERSON &&
       isTextMessage &&
       !isSysTemMessage;
-    console.info(message);
     if (!isTextMessage || isSysTemMessage) return null;
 
     const trim_content = content.trim();

@@ -42,9 +42,7 @@ export class ReceiverService {
 
     const clean_message =
       this.kMessageDecryptService.clean_kook_message(message);
-    console.info(clean_message);
     if (clean_message) {
-      console.info(clean_message);
       await this.kReceiver.add('message', clean_message, {
         removeOnComplete: true,
       });

@@ -5,7 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ReceiverModule } from './receiver/receiver.module';
 import { SenderModule } from './sender/sender.module';
-import config from '../config/configuration';
+import config from './config/configuration';
 import { BullModule } from '@nestjs/bull';
 import { KookMessageDecryptService } from './kook-message-decrypt/kook-message-decrypt.service';
 import { RedisModule } from './redis/redis.module';

@@ -61,7 +61,6 @@ export class ReplyService {
     const cache = await this.redisService.get('dn_activity');
     if (content.trim() !== 'up' && cache) return cache;
 
-    console.info('update dn activity');
     const response = await fetch(
       `https://dn.web.sdo.com/web11/handler/GetNewsList.ashx`,
       {

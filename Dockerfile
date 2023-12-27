@@ -3,7 +3,6 @@ FROM node:18.0-alpine3.14 as build-stage
 WORKDIR /app
 
 COPY package.json .
-COPY .env .
 
 RUN npm install
 
@@ -16,7 +15,6 @@ FROM node:18.0-alpine3.14 as production-stage
 
 COPY --from=build-stage /app/dist /app
 COPY --from=build-stage /app/package.json /app/package.json
-COPY --from=build-stage /app/.env /app/.env
 
 WORKDIR /app
 

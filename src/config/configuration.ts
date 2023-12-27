@@ -27,7 +27,7 @@ export default () => ({
       'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/eb-instant',
   },
   redis: {
-    host: 'localhost',
-    port: 6379,
+    host: process.env.REDIS_HOST || 'localhost',
+    port: process.env.REDIS_PORT || 6379,
   },
 });

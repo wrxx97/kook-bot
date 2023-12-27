@@ -58,6 +58,6 @@ export class SenderService {
           }),
         ),
     );
-    console.info(res.headers);
+    return res;
   }
 }
