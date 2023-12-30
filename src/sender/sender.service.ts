@@ -44,7 +44,8 @@ export class SenderService {
         content = await this.replyService.dn_activity(command_content);
         break;
       case KookCommandType.SUBSCRIBE:
-        content += await this.replyService.subscribe(target_id);
+      case KookCommandType.UNSUBSCRIBE:
+        content += await this.replyService[command](target_id);
       default:
         break;
     }

@@ -28,6 +28,7 @@ export enum KookCommandType {
   DRAW = 'draw',
 
   SUBSCRIBE = 'subscribe',
+  UNSUBSCRIBE = 'unsubscribe',
 }
 
 export const SYSTEM_AUTHOR_ID = '1';

@@ -258,4 +258,15 @@ export class ReplyService {
     await this.redisService.set('subscribe_target_ids', target_ids.join(','));
     return '订阅成功';
   }
+
+  async unsubscribe(target_id) {
+    const cache = (await this.redisService.get('subscribe_target_ids')) || '';
+    const target_ids = cache.split(',').filter(Boolean);
+    if (!target_ids.includes(target_id)) return '没有订阅过';
+    await this.redisService.set(
+      'subscribe_target_ids',
+      target_ids.filter((i) => i !== target_id).join(','),
+    );
+    return '取消订阅成功';
+  }
 }
