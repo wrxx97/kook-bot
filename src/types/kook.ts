@@ -26,6 +26,8 @@ export enum KookCommandType {
   CHAT = 'c',
   // draw
   DRAW = 'draw',
+
+  SUBSCRIBE = 'subscribe',
 }
 
 export const SYSTEM_AUTHOR_ID = '1';

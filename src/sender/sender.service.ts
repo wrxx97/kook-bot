@@ -22,24 +22,33 @@ export class SenderService {
       command,
       command_content,
     } = data;
-    let content = '';
+    let content = `(met)${author_id}(met)`;
+    let type = KookMsgType.KMARKDOWN;
     switch (command) {
       case KookCommandType.RANK:
-        content = await this.replyService.dn_rank();
+        content += await this.replyService.dn_rank();
         break;
       case KookCommandType.CHAT:
-        content = await this.replyService.chat(command_content);
+        content += await this.replyService.chat(command_content);
         break;
       case KookCommandType.WEEK_ACTIVITY:
+        type = KookMsgType.CARD;
         content = await this.replyService.dn_activity(command_content);
         break;
       default:
         break;
     }
-    return {
-      type: KookMsgType.KMARKDOWN,
+
+    console.info({
+      type,
       target_id,
-      content: `(met)${author_id}(met)\n${content}`,
+      content,
+      quote: command === KookCommandType.CHAT ? quote : null,
+    });
+    return {
+      type,
+      target_id,
+      content,
       quote: command === KookCommandType.CHAT ? quote : null,
     };
   }
@@ -58,6 +67,7 @@ export class SenderService {
           }),
         ),
     );
+    console.info(res.data);
     return res;
   }
 }
