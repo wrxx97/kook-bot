@@ -6,7 +6,7 @@ import { KookMessageDecryptService } from 'src/kook-message-decrypt/kook-message
 
 @Injectable()
 export class ReceiverService {
-  constructor(@InjectQueue('kook_receiver') private kReceiver: Queue) { }
+  constructor(@InjectQueue('kook_receiver') private kReceiver: Queue) {}
 
   @Inject(KookMessageDecryptService)
   private readonly kMessageDecryptService: KookMessageDecryptService;

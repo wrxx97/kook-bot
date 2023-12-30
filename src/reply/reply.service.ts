@@ -4,7 +4,6 @@ import { RedisService } from 'src/redis/redis.service';
 import * as qs from 'qs';
 import * as dayjs from 'dayjs';
 import * as relativeTime from 'dayjs/plugin/relativeTime';
-import { Cron } from '@nestjs/schedule';
 
 dayjs.extend(relativeTime);
 
@@ -55,7 +54,6 @@ export class ReplyService {
     return '暂无数据';
   }
 
-  @Cron('0 53 16 * * *')
   async update_dn_activity() {
     await this.dn_activity('up');
   }
@@ -184,6 +182,22 @@ export class ReplyService {
     return data;
   }
 
+  async activity_is_update() {
+    const recent_cache = await this.get_data_cache('dn_recent_activity');
+    const week_cache = await this.get_data_cache('dn_week_activity');
+    await this.redisService.clear('dn_recent_activity');
+    await this.redisService.clear('dn_week_activity');
+    const rencent_activity = await this.get_recent_activity();
+    const week_activity = await this.get_week_activity();
+
+    if (
+      JSON.stringify(rencent_activity) !== JSON.stringify(recent_cache) ||
+      JSON.stringify(week_activity) !== JSON.stringify(week_cache)
+    ) {
+      return true;
+    }
+  }
+
   transform_dn_fetch(data) {
     let fields;
     console.info(data);
@@ -221,6 +235,7 @@ export class ReplyService {
   }
 
   get_activity_end_desc(str) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [start, end] = str.split(' — ');
     return ` **${dayjs().to(dayjs(end))}**`;
   }
@@ -236,13 +251,11 @@ export class ReplyService {
   }
 
   async subscribe(target_id) {
-    await this.redisService.set('subscribe_target_id', target_id);
+    const cache = (await this.redisService.get('subscribe_target_ids')) || '';
+    const target_ids = cache.split(',').filter(Boolean);
+    if (target_ids.includes(target_id)) return '已经订阅过了';
+    target_ids.push(target_id);
+    await this.redisService.set('subscribe_target_ids', target_ids.join(','));
     return '订阅成功';
-  }
-
-  @Cron('0 5 0 * * *') // 每天 00:05 执行一次
-  async auto_send_msg() {
-    const target_id = await this.redisService.get('subscribe_target_id');
-    if (!target_id) return;
   }
 }

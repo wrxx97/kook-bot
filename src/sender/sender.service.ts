@@ -6,15 +6,23 @@ import { KookCommandType } from 'src/types/kook';
 import { firstValueFrom, catchError } from 'rxjs';
 import { AxiosError } from 'axios';
 import { ConfigService } from '@nestjs/config';
+import { RedisService } from 'src/redis/redis.service';
+import { Cron } from '@nestjs/schedule';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class SenderService {
+  constructor(@InjectQueue('kook_auto_sender') private autoSender: Queue) {}
+
   @Inject(ReplyService)
   private readonly replyService: ReplyService;
   @Inject(HttpService)
   private readonly httpService: HttpService;
   @Inject(ConfigService)
   private readonly configService: ConfigService;
+  @Inject(RedisService)
+  private readonly redisService: RedisService;
 
   async generate_message(data): Promise<SendGroupMsg> {
     const {
@@ -35,16 +43,12 @@ export class SenderService {
         type = KookMsgType.CARD;
         content = await this.replyService.dn_activity(command_content);
         break;
+      case KookCommandType.SUBSCRIBE:
+        content += await this.replyService.subscribe(target_id);
       default:
         break;
     }
 
-    console.info({
-      type,
-      target_id,
-      content,
-      quote: command === KookCommandType.CHAT ? quote : null,
-    });
     return {
       type,
       target_id,
@@ -67,7 +71,28 @@ export class SenderService {
           }),
         ),
     );
-    console.info(res.data);
     return res;
+  }
+
+  @Cron('00 19 * * *')
+  async auto_add_send_task() {
+    const is_update = await this.replyService.activity_is_update();
+    if (is_update) {
+      const target_ids = await this.redisService.get('subscribe_target_ids');
+      const target_ids_array = target_ids.split(',');
+      for (const target_id of target_ids_array) {
+        await this.autoSender.add(
+          'message',
+          {
+            type: KookMsgType.CARD,
+            target_id,
+            content: await this.replyService.dn_activity('normal'),
+          },
+          {
+            removeOnComplete: true,
+          },
+        );
+      }
+    }
   }
 }
