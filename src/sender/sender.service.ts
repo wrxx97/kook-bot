@@ -79,7 +79,8 @@ export class SenderService {
   async auto_add_send_task() {
     const is_update = await this.replyService.activity_is_update();
     if (is_update) {
-      const target_ids = await this.redisService.get('subscribe_target_ids');
+      const target_ids =
+        (await this.redisService.get('subscribe_target_ids')) || '';
       const target_ids_array = target_ids.split(',');
       for (const target_id of target_ids_array) {
         await this.autoSender.add(
