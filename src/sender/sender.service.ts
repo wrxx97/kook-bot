@@ -104,7 +104,9 @@ export class SenderService {
     await this.add_send_task();
   }
 
-  @Cron('00 12,18,22 * * 3')
+  @Cron('00 12,18,22 * * 3', {
+    timeZone: 'Asia/Shanghai',
+  })
   async auto_add_send_task2() {
     await this.add_send_task();
   }
