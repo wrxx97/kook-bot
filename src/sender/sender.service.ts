@@ -75,8 +75,7 @@ export class SenderService {
     return res;
   }
 
-  @Cron('00 19 * * *')
-  async auto_add_send_task() {
+  add_send_task() {
     const is_update = await this.replyService.activity_is_update();
     if (is_update) {
       const target_ids =
@@ -96,5 +95,17 @@ export class SenderService {
         );
       }
     }
+  }
+
+  @Cron('00 19 * * *', {
+    timeZone: 'Asia/Shanghai',
+  })
+  async auto_add_send_task1() {
+    await this.add_send_task();
+  }
+
+  @Cron('00 12,18,22 * * 3')
+  async auto_add_send_task2() {
+    await this.add_send_task();
   }
 }
