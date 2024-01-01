@@ -75,7 +75,7 @@ export class SenderService {
     return res;
   }
 
-  add_send_task() {
+  async add_send_task() {
     const is_update = await this.replyService.activity_is_update();
     if (is_update) {
       const target_ids =
