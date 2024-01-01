@@ -19,6 +19,6 @@ export class RedisService {
   }
 
   async clear(key: string) {
-    await this.redisClient.del(key);
+    await this.redisClient.set(key, '');
   }
 }
