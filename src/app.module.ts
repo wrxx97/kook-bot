@@ -29,6 +29,7 @@ import { RedisModule } from './redis/redis.module';
           redis: {
             host: config.get('redis').host,
             port: config.get('redis').port,
+            password: config.get('redis').pass,
           },
         };
       },
@@ -41,4 +42,4 @@ import { RedisModule } from './redis/redis.module';
   controllers: [AppController],
   providers: [AppService, KookMessageDecryptService],
 })
-export class AppModule { }
+export class AppModule {}
