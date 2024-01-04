@@ -241,7 +241,7 @@ export class ReplyService {
   }
 
   async set_data_cache(key, data) {
-    await this.redisService.set(key, JSON.stringify(data), 60 * 60 * 24);
+    await this.redisService.set(key, JSON.stringify(data), 60 * 60 * 24 * 7);
   }
 
   async get_data_cache(key) {
