@@ -1,14 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createDecipheriv } from 'crypto';
+import { get } from 'lodash';
 import {
-  KookMsgType,
   type KookBotConfig,
-  SYSTEM_AUTHOR_ID,
   KookChannelType,
   KookCommandType,
+  KookMsgType,
+  SYSTEM_AUTHOR_ID,
 } from 'src/types/kook';
-import { get } from 'lodash';
 
 @Injectable()
 export class KookMessageDecryptService {

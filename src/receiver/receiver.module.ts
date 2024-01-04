@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
-import { ReceiverService } from './receiver.service';
-import { ReceiverController } from './receiver.controller';
 import { BullModule } from '@nestjs/bull';
-import { ReceiverProcessor } from './receiver.processor';
+import { Module } from '@nestjs/common';
 import { KookMessageDecryptService } from 'src/kook-message-decrypt/kook-message-decrypt.service';
 import { SenderModule } from 'src/sender/sender.module';
+
+import { ReceiverController } from './receiver.controller';
+import { ReceiverProcessor } from './receiver.processor';
+import { ReceiverService } from './receiver.service';
 
 @Module({
   imports: [
@@ -16,4 +17,4 @@ import { SenderModule } from 'src/sender/sender.module';
   controllers: [ReceiverController],
   providers: [ReceiverService, ReceiverProcessor, KookMessageDecryptService],
 })
-export class ReceiverModule { }
+export class ReceiverModule {}

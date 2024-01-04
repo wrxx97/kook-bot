@@ -1,14 +1,15 @@
+import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ReceiverModule } from './receiver/receiver.module';
-import { SenderModule } from './sender/sender.module';
 import config from './config/configuration';
-import { BullModule } from '@nestjs/bull';
 import { KookMessageDecryptService } from './kook-message-decrypt/kook-message-decrypt.service';
+import { ReceiverModule } from './receiver/receiver.module';
 import { RedisModule } from './redis/redis.module';
+import { SenderModule } from './sender/sender.module';
 
 @Module({
   imports: [

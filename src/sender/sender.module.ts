@@ -1,12 +1,13 @@
-import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { SenderService } from './sender.service';
-import { SenderController } from './sender.controller';
-import { ConfigService } from '@nestjs/config';
-import { ReplyService } from 'src/reply/reply.service';
-import { ReplyModule } from 'src/reply/reply.module';
 import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ReplyModule } from 'src/reply/reply.module';
+import { ReplyService } from 'src/reply/reply.service';
+
+import { SenderController } from './sender.controller';
 import { SenderProcessor } from './sender.processor';
+import { SenderService } from './sender.service';
 
 @Module({
   imports: [

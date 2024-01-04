@@ -1,15 +1,15 @@
 import { HttpService } from '@nestjs/axios';
+import { InjectQueue } from '@nestjs/bull';
 import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
+import { AxiosError } from 'axios';
+import { Queue } from 'bull';
+import { catchError, firstValueFrom } from 'rxjs';
+import { RedisService } from 'src/redis/redis.service';
 import { ReplyService } from 'src/reply/reply.service';
 import { KookMsgType, SendGroupMsg } from 'src/types/kook';
 import { KookCommandType } from 'src/types/kook';
-import { firstValueFrom, catchError } from 'rxjs';
-import { AxiosError } from 'axios';
-import { ConfigService } from '@nestjs/config';
-import { RedisService } from 'src/redis/redis.service';
-import { Cron } from '@nestjs/schedule';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
 
 @Injectable()
 export class SenderService {
