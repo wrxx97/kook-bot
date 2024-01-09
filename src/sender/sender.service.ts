@@ -5,11 +5,17 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { AxiosError } from 'axios';
 import { Queue } from 'bull';
+import * as dayjs from 'dayjs';
+import * as timezone from 'dayjs/plugin/timezone';
+import * as utc from 'dayjs/plugin/utc';
 import { catchError, firstValueFrom } from 'rxjs';
 import { RedisService } from 'src/redis/redis.service';
 import { ReplyService } from 'src/reply/reply.service';
 import { KookMsgType, SendGroupMsg } from 'src/types/kook';
 import { KookCommandType } from 'src/types/kook';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 @Injectable()
 export class SenderService {
@@ -80,6 +86,7 @@ export class SenderService {
     if (is_update) {
       const target_ids =
         (await this.redisService.get('subscribe_target_ids')) || '';
+      if (!target_ids) return;
       const target_ids_array = target_ids.split(',');
       for (const target_id of target_ids_array) {
         await this.autoSender.add(
@@ -109,5 +116,45 @@ export class SenderService {
   })
   async auto_add_send_task2() {
     await this.add_send_task();
+  }
+
+  @Cron('01 00 * * *', {
+    timeZone: 'Asia/Shanghai',
+  })
+  async auto_send_TodayActivity() {
+    const date = dayjs('2024-01-25').tz('Asia/Shanghai');
+    const targetDate = dayjs('2024-01-24').tz('Asia/Shanghai');
+
+    // 判断当前时间是否在指定日期之前
+    const isBefore = date.isBefore(targetDate);
+    if (!isBefore) return;
+
+    const day = date.day();
+    const list = [
+      '开启 b 级佣兵箱子1个',
+      '门派讨伐战',
+      '拾取秋之宝石 3 个',
+      '开启古代混沌纹章袋子',
+      '丢弃初级力量果汁',
+      '在线30分钟',
+      '拾取古代纹样 30 个',
+    ];
+    const target_ids =
+      (await this.redisService.get('subscribe_target_ids')) || '';
+    if (!target_ids) return;
+    const target_ids_array = target_ids.split(',');
+
+    for (const target_id of target_ids_array) {
+      await this.autoSender.add(
+        'message',
+        {
+          target_id,
+          content: list[day],
+        },
+        {
+          removeOnComplete: true,
+        },
+      );
+    }
   }
 }
