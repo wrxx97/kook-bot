@@ -353,7 +353,6 @@ export class ReplyService {
       return element ? element.getClientRects()[0].height : null;
     });
     await page.setViewport({ width: 1920, height: elementHeight });
-    console.info(elementHeight);
     const buffer = await page.screenshot({
       path: 'output.png',
       fullPage: true,
