@@ -123,7 +123,7 @@ export class SenderService {
     timeZone: 'Asia/Shanghai',
   })
   async auto_send_TodayActivity() {
-    const date = dayjs('2024-01-25').tz('Asia/Shanghai');
+    const date = dayjs().tz('Asia/Shanghai');
     const targetDate = dayjs('2024-01-24').tz('Asia/Shanghai');
 
     // 判断当前时间是否在指定日期之前
