@@ -16,6 +16,7 @@ export default () => ({
         send_private_message: '/private/message',
         update_message: '/message',
         reaction_message: '/reaction',
+        upload: '/asset/create',
       },
     },
   },
@@ -25,6 +26,10 @@ export default () => ({
     sk: 'oCLjswylSvCmyAYIigSzQxEwHByqbMTv',
     chat_api:
       'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/eb-instant',
+  },
+  gpt4: {
+    api: 'http://172.19.28.16:8080/v1/chat/completions',
+    token: 'ghu_79nLGdRUldac3N9fHtKZyPGwlPiCfz3tA8rj',
   },
   redis: {
     host: process.env.REDIS_HOST || 'localhost',

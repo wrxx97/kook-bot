@@ -8,6 +8,6 @@ export class ReplyController {
 
   @Get()
   async test() {
-    return await this.replyService.dn_activity('up');
+    return await this.replyService.analyze_activity('357194');
   }
 }

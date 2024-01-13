@@ -86,6 +86,7 @@ export class SenderService {
     if (is_update) {
       const target_ids =
         (await this.redisService.get('subscribe_target_ids')) || '';
+      const newId = typeof is_update === 'string' ? is_update : '';
       if (!target_ids) return;
       const target_ids_array = target_ids.split(',');
       for (const target_id of target_ids_array) {
@@ -94,7 +95,7 @@ export class SenderService {
           {
             type: KookMsgType.CARD,
             target_id,
-            content: await this.replyService.dn_activity('normal'),
+            content: await this.replyService.dn_activity('normal', newId),
           },
           {
             removeOnComplete: true,

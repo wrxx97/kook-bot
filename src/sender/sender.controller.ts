@@ -8,7 +8,7 @@ export class SenderController {
 
   @Get()
   async test() {
-    await this.senderService.auto_send_TodayActivity();
-    return 'success';
+    await this.senderService.auto_add_send_task1();
+    return 'success1';
   }
 }

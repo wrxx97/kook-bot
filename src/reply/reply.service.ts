@@ -2,10 +2,15 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as dayjs from 'dayjs';
 import * as relativeTime from 'dayjs/plugin/relativeTime';
+import * as MarkdownIt from 'markdown-it';
+import * as puppeteer from 'puppeteer';
 import * as qs from 'qs';
 import { RedisService } from 'src/redis/redis.service';
+import { parseHtmlTableTo2DArray } from 'src/utils';
 
 dayjs.extend(relativeTime);
+
+const md = new MarkdownIt();
 
 @Injectable()
 export class ReplyService {
@@ -58,7 +63,7 @@ export class ReplyService {
     await this.dn_activity('up');
   }
 
-  async dn_activity(content) {
+  async dn_activity(content, newId?) {
     if (content.trim() === 'up') {
       await this.redisService.clear('dn_recent_activity');
       await this.redisService.clear('dn_week_activity');
@@ -66,6 +71,8 @@ export class ReplyService {
 
     const rencent_activity = await this.get_recent_activity();
     const week_activity = await this.get_week_activity();
+
+    const cards = [];
 
     const week_card = {
       type: 'card',
@@ -111,7 +118,47 @@ export class ReplyService {
       ],
     };
 
-    const activities = JSON.stringify([week_card, recent_card]);
+    cards.push(week_card, recent_card);
+
+    if (newId) {
+      cards.push({
+        type: 'card',
+        theme: 'primary',
+        size: 'lg',
+        modules: [
+          {
+            type: 'header',
+            text: {
+              type: 'plain-text',
+              content: '活动详情',
+            },
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'kmarkdown',
+              content: (
+                await this.redisService.get(`dn_activity_${newId}_data`)
+              ).replaceAll('&gt;', '>'),
+            },
+          },
+          {
+            type: 'container',
+            elements: [
+              {
+                type: 'image',
+                src: await this.redisService.get(`dn_activity_${newId}`),
+                alt: '',
+                size: 'lg', // size只用在图文混排  图片组大小固定
+                circle: false,
+              },
+            ],
+          },
+        ],
+      });
+    }
+
+    const activities = JSON.stringify(cards);
     return activities;
   }
 
@@ -182,6 +229,166 @@ export class ReplyService {
     return data;
   }
 
+  async analyze_activity(id) {
+    const cache = await this.redisService.get(`dn_activity_${id}`);
+    const cache_data = await this.redisService.get(`dn_activity_${id}_data`);
+    if (cache) {
+      return {
+        url: cache,
+        data: cache_data,
+      };
+    }
+    const response = await fetch(
+      'https://dn.web.sdo.com/web11/handler/GetNewsContent.ashx',
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json, text/javascript, */*; q=0.01',
+          'Accept-Language': 'zh-CN,zh;q=0.9',
+          Connection: 'keep-alive',
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          Origin: 'https://dn.web.sdo.com',
+          Referer: `https://dn.web.sdo.com/web11/news/newsContent.html?ID=${id}&CategoryID=103`,
+          'Sec-Fetch-Dest': 'empty',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-origin',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'X-Requested-With': 'XMLHttpRequest',
+          'sec-ch-ua':
+            '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+        },
+        body: `ID=${id}`,
+      },
+    ).then((res) => res.json());
+    const content = JSON.parse(response.ReturnObject)
+      .Content.replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&ge;/g, '>=')
+      .trim();
+    const analysis = await fetch(this.configService.get('gpt4.api'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.configService.get('gpt4.token')}`,
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: 'user',
+            content: `请分析下面的活动，将每一项拆分成表格返回，表格列分别为:编号、活动要求、活动奖励。奖励发放方式、备注；表格要求内容简要明确，不能丢失关键信息。以下为活动内容:\n\n
+            ${content}`,
+          },
+        ],
+        stream: false,
+        model: 'gpt-4',
+        temperature: 0.5,
+        presence_penalty: 0,
+        frequency_penalty: 0,
+        top_p: 1,
+      }),
+    }).then((res) => res.json());
+    const ac_res = analysis.choices[0].message.content;
+    const { url, data } = await this.mdToKookImage(ac_res, id);
+    await this.redisService.set(`dn_activity_${id}`, url, 60 * 60 * 24 * 14);
+    await this.redisService.set(
+      `dn_activity_${id}_data`,
+      data,
+      60 * 60 * 24 * 14,
+    );
+    return url;
+  }
+
+  async mdToKookImage(content, id) {
+    const html = md.render(content);
+    const data = parseHtmlTableTo2DArray(html);
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body {
+            font-family: 'Arial', sans-serif;
+            margin: 10px;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+          }
+          
+          /* 表头样式 */
+          th, td {
+            border: 1px solid #dddddd; /* 边框线 */
+            padding: 8px; /* 单元格内边距 */
+            text-align: left;
+          }
+          
+          /* 交替行颜色 */
+          tr:nth-child(even) {
+            background-color: #f9f9f9; /* 浅色背景 */
+          }
+          
+          tr:nth-child(odd) {
+            background-color: #ffffff; /* 白色背景 */
+          }
+        </style>
+      </head>
+      <body>
+        ${html}
+      </body>
+    </html>
+  `;
+    await page.setContent(htmlContent, { waitUntil: 'networkidle2' });
+    await page.setViewport({ width: 1920, height: 1080 });
+    const elementHeight = await page.evaluate(() => {
+      const element = document.querySelector('table');
+      return element ? element.getClientRects()[0].height : null;
+    });
+    await page.setViewport({ width: 1920, height: elementHeight });
+    console.info(elementHeight);
+    const buffer = await page.screenshot({
+      path: 'output.png',
+      fullPage: true,
+    });
+    await browser.close();
+    const formData = new FormData();
+
+    const blob = new Blob([buffer], { type: 'image/png' });
+    formData.append('file', blob);
+    const upload = await fetch(
+      `${this.configService.get('kook_bot.api.host')}${this.configService.get(
+        'kook_bot.api.routes.upload',
+      )}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bot ${this.configService.get('kook_bot.token')}`,
+        },
+        body: formData,
+      },
+    ).then((res) => res.json());
+    const [_, ..._data] = data || [];
+    const url = `https://dn.web.sdo.com/web11/news/newsContent.html?ID=${id}&CategoryID=103`;
+    return {
+      url: upload.data.url,
+      data: _data
+        .map(
+          (i) =>
+            `${i[0]}. [${i[1]}](${url})
+   ${i[3]} \`${i[2]}\``,
+        )
+        .join('\n'),
+    };
+  }
+
   async activity_is_update() {
     const recent_cache = await this.get_data_cache('dn_recent_activity');
     const week_cache = await this.get_data_cache('dn_week_activity');
@@ -189,31 +396,37 @@ export class ReplyService {
     await this.redisService.clear('dn_week_activity');
     const rencent_activity = await this.get_recent_activity();
     const week_activity = await this.get_week_activity();
+    let newId = '';
+    if (JSON.stringify(week_activity) !== JSON.stringify(week_cache)) {
+      newId = week_activity[0].ID;
+      await this.analyze_activity(newId);
+      return newId;
+    }
 
-    if (
-      JSON.stringify(rencent_activity) !== JSON.stringify(recent_cache) ||
-      JSON.stringify(week_activity) !== JSON.stringify(week_cache)
-    ) {
+    if (JSON.stringify(rencent_activity) !== JSON.stringify(recent_cache)) {
       return true;
     }
   }
 
   transform_dn_fetch(data) {
     let fields;
-    console.info(data);
-    return JSON.parse(data.ReturnObject).dataList.reduce((pre, cur, index) => {
-      if (index !== 0) {
-        pre.push(
-          cur.reduce((obj, value, index) => {
-            obj[fields[index]] = value;
-            return obj;
-          }, {}),
-        );
-      } else {
-        fields = cur;
-      }
-      return pre;
-    }, []);
+    return JSON.parse(data.ReturnObject)
+      .dataList.reduce((pre, cur, index) => {
+        if (index !== 0) {
+          pre.push(
+            cur.reduce((obj, value, index) => {
+              obj[fields[index]] = value;
+              return obj;
+            }, {}),
+          );
+        } else {
+          fields = cur;
+        }
+        return pre;
+      }, [])
+      .sort(
+        (a, b) => dayjs(b.PublishDate).unix() - dayjs(a.PublishDate).unix(),
+      );
   }
 
   transform_dn_to_kmd(data) {
