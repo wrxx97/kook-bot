@@ -308,7 +308,15 @@ export class ReplyService {
   async mdToKookImage(content, id) {
     const html = md.render(content);
     const data = parseHtmlTableTo2DArray(html);
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      args: [
+        '--disable-gpu',
+        '--disable-setuid-sandbox',
+        '--no-sandbox',
+        '--no-zygote',
+        '--lang=zh-CN',
+      ],
+    });
     const page = await browser.newPage();
     const htmlContent = `
     <!DOCTYPE html>
